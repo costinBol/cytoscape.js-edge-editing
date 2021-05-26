@@ -26,12 +26,12 @@ module.exports = function (params, cy) {
   var anchorTouched = false;
   // used call eMouseDown of anchorManager if the mouse is out of the content on cy.on(tapend)
   var mouseOut;
-  
+
   var functions = {
     init: function () {
       // register undo redo functions
       registerUndoRedoFunctions(cy, anchorPointUtilities, params);
-      
+
       var self = this;
       var opts = params;
 
@@ -58,7 +58,7 @@ module.exports = function (params, cy) {
         If you are someone that is creating an extension that uses Konva in the future, you need to
         be careful about how events register. If you use a different stage almost certainly one
         or both of the extensions that use the stage created below will break.
-      */ 
+      */
       var stage;
       if (Konva.stages.length < stageId) {
         stage = new Konva.Stage({
@@ -71,7 +71,7 @@ module.exports = function (params, cy) {
       else {
         stage = Konva.stages[stageId - 1];
       }
-      
+
       var canvas;
       if (stage.getChildren().length < 1) {
         canvas = new Konva.Layer();
@@ -79,8 +79,8 @@ module.exports = function (params, cy) {
       }
       else {
         canvas = stage.getChildren()[0];
-      }  
-      
+      }
+
       var anchorManager = {
         edge: undefined,
         edgeType: 'inconclusive',
@@ -89,15 +89,15 @@ module.exports = function (params, cy) {
         touchedAnchor: undefined,
         // remembers the index of the moving anchor
         touchedAnchorIndex: undefined,
-        bindListeners: function(anchor){
+        bindListeners: function (anchor) {
           anchor.on("mousedown touchstart", this.eMouseDown);
         },
-        unbindListeners: function(anchor){
+        unbindListeners: function (anchor) {
           anchor.off("mousedown touchstart", this.eMouseDown);
         },
         // gets trigger on clicking on context menus, while cy listeners don't get triggered
         // it can cause weird behaviour if not aware of this
-        eMouseDown: function(event){
+        eMouseDown: function (event) {
           // anchorManager.edge.unselect() won't work sometimes if this wasn't here
           cy.autounselectify(false);
 
@@ -121,23 +121,23 @@ module.exports = function (params, cy) {
 
           turnOffActiveBgColor();
           disableGestures();
-          
+
           cy.autoungrabify(true);
 
           canvas.getStage().on("contentTouchend contentMouseup", anchorManager.eMouseUp);
           canvas.getStage().on("contentMouseout", anchorManager.eMouseOut);
         },
         // gets called before cy.on('tapend')
-        eMouseUp: function(event){
+        eMouseUp: function (event) {
           // won't be called if the mouse is released out of screen
           anchorTouched = false;
           anchorManager.touchedAnchor = undefined;
           mouseOut = false;
           anchorManager.edge.select();
-          
+
           resetActiveBgColor();
           resetGestures();
-          
+
           /* 
            * IMPORTANT
            * Any programmatic calls to .select(), .unselect() after this statement are ignored
@@ -156,7 +156,7 @@ module.exports = function (params, cy) {
            * 
            * These is anther cy.autoselectify(true) in cy.on('tapend') 
            * 
-          */ 
+          */
           cy.autounselectify(true);
           cy.autoungrabify(false);
 
@@ -164,14 +164,14 @@ module.exports = function (params, cy) {
           canvas.getStage().off("contentMouseout", anchorManager.eMouseOut);
         },
         // handle mouse going out of canvas 
-        eMouseOut: function (event){
+        eMouseOut: function (event) {
           mouseOut = true;
         },
-        clearAnchorsExcept: function(dontClean = undefined){
+        clearAnchorsExcept: function (dontClean = undefined) {
           var exceptionApplies = false;
 
           this.anchors.forEach((anchor, index) => {
-            if(dontClean && anchor === dontClean){
+            if (dontClean && anchor === dontClean) {
               exceptionApplies = true; // the dontClean anchor is not cleared
               return;
             }
@@ -180,7 +180,7 @@ module.exports = function (params, cy) {
             anchor.destroy();
           });
 
-          if(exceptionApplies){
+          if (exceptionApplies) {
             this.anchors = [dontClean];
           }
           else {
@@ -190,22 +190,22 @@ module.exports = function (params, cy) {
           }
         },
         // render the bend and control shapes of the given edge
-        renderAnchorShapes: function(edge) {
+        renderAnchorShapes: function (edge) {
           this.edge = edge;
           this.edgeType = anchorPointUtilities.getEdgeType(edge);
 
-          if(!edge.hasClass('edgebendediting-hasbendpoints') &&
-              !edge.hasClass('edgecontrolediting-hascontrolpoints')) {
+          if (!edge.hasClass('edgebendediting-hasbendpoints') &&
+            !edge.hasClass('edgecontrolediting-hascontrolpoints')) {
             return;
           }
-          
+
           var anchorList = anchorPointUtilities.getAnchorsAsArray(edge);//edge._private.rdata.segpts;
           var length = getAnchorShapesLength(edge) * 0.65;
-          
+
           var srcPos = edge.source().position();
           var tgtPos = edge.target().position();
 
-          for(var i = 0; anchorList && i < anchorList.length; i = i + 2){
+          for (var i = 0; anchorList && i < anchorList.length; i = i + 2) {
             var anchorX = anchorList[i];
             var anchorY = anchorList[i + 1];
 
@@ -215,15 +215,15 @@ module.exports = function (params, cy) {
           canvas.draw();
         },
         // render a anchor shape with the given parameters
-        renderAnchorShape: function(anchorX, anchorY, length) {
+        renderAnchorShape: function (anchorX, anchorY, length) {
           // get the top left coordinates
           var topLeftX = anchorX - length / 2;
           var topLeftY = anchorY - length / 2;
-          
+
           // convert to rendered parameters
-          var renderedTopLeftPos = convertToRenderedPosition({x: topLeftX, y: topLeftY});
+          var renderedTopLeftPos = convertToRenderedPosition({ x: topLeftX, y: topLeftY });
           length *= cy.zoom();
-          
+
           var newAnchor = new Konva.Rect({
             x: renderedTopLeftPos.x,
             y: renderedTopLeftPos.y,
@@ -240,26 +240,26 @@ module.exports = function (params, cy) {
         }
       };
 
-      var cxtAddBendFcn = function(event){
+      var cxtAddBendFcn = function (event) {
         cxtAddAnchorFcn(event, 'bend');
       }
 
-      var cxtAddControlFcn = function(event) {
+      var cxtAddControlFcn = function (event) {
         cxtAddAnchorFcn(event, 'control');
       }
 
       var cxtAddAnchorFcn = function (event, anchorType) {
         var edge = event.target || event.cyTarget;
-        if(!anchorPointUtilities.isIgnoredEdge(edge)) {
+        if (!anchorPointUtilities.isIgnoredEdge(edge)) {
 
           var type = anchorPointUtilities.getEdgeType(edge);
           var weights, distances, weightStr, distanceStr;
 
-          if(type === 'inconclusive'){
+          if (type === 'inconclusive') {
             weights = [];
             distances = [];
           }
-          else{
+          else {
             weightStr = anchorPointUtilities.syntax[type]['weight'];
             distanceStr = anchorPointUtilities.syntax[type]['distance'];
 
@@ -290,7 +290,7 @@ module.exports = function (params, cy) {
         var edge = anchorManager.edge;
         var type = anchorPointUtilities.getEdgeType(edge);
 
-        if(anchorPointUtilities.edgeTypeInconclusiveShouldntHappen(type, "UiUtilities.js, cxtRemoveAnchorFcn")){
+        if (anchorPointUtilities.edgeTypeInconclusiveShouldntHappen(type, "UiUtilities.js, cxtRemoveAnchorFcn")) {
           return;
         }
 
@@ -302,12 +302,12 @@ module.exports = function (params, cy) {
         };
 
         anchorPointUtilities.removeAnchor();
-        
-        if(options().undoable) {
+
+        if (options().undoable) {
           cy.undoRedo().do('changeAnchorPoints', param);
         }
-        
-        setTimeout(function(){refreshDraws();edge.select();}, 50) ;
+
+        setTimeout(function () { refreshDraws(); edge.select(); }, 50);
 
       };
 
@@ -320,22 +320,22 @@ module.exports = function (params, cy) {
           weights: [].concat(edge.data(anchorPointUtilities.syntax[type]['weight'])),
           distances: [].concat(edge.data(anchorPointUtilities.syntax[type]['distance']))
         };
-        
+
         anchorPointUtilities.removeAllAnchors();
 
         if (options().undoable) {
           cy.undoRedo().do('changeAnchorPoints', param);
         }
-        setTimeout(function(){refreshDraws();edge.select();}, 50);
+        setTimeout(function () { refreshDraws(); edge.select(); }, 50);
       }
-      
+
       // function to reconnect edge
       var handleReconnectEdge = opts.handleReconnectEdge;
       // function to validate edge source and target on reconnection
-      var validateEdge = opts.validateEdge; 
+      var validateEdge = opts.validateEdge;
       // function to be called on invalid edge reconnection
       var actOnUnsuccessfulReconnection = opts.actOnUnsuccessfulReconnection;
-      
+
       var menuItems = [
         {
           id: addBendPointCxtMenuId,
@@ -348,7 +348,7 @@ module.exports = function (params, cy) {
           content: opts.removeBendMenuItemTitle,
           selector: 'edge',
           onClickFunction: cxtRemoveAnchorFcn
-        }, 
+        },
         {
           id: removeAllBendPointCtxMenuId,
           content: opts.removeAllBendMenuItemTitle,
@@ -368,7 +368,7 @@ module.exports = function (params, cy) {
           selector: 'edge',
           coreAsWell: true,
           onClickFunction: cxtRemoveAnchorFcn
-        }, 
+        },
         {
           id: removeAllControlPointCtxMenuId,
           content: opts.removeAllControlMenuItemTitle,
@@ -376,8 +376,8 @@ module.exports = function (params, cy) {
           onClickFunction: cxtRemoveAllAnchorsFcn
         },
       ];
-      
-      if(cy.contextMenus) {
+
+      if (cy.contextMenus) {
         var menus = cy.contextMenus('get');
         // If context menus is active just append menu items else activate the extension
         // with initial menu items
@@ -390,7 +390,67 @@ module.exports = function (params, cy) {
           });
         }
       }
-      
+      else {
+        if (cy.cxtmenu && opts.cxtmenuOptions && !opts.cxtmenuSkip) {
+
+          cy.on('cxttapstart taphold', function (event) {
+
+            var evtTarget = event.target;
+
+            if (evtTarget === cy) {
+              console.log('cxttapstart  on background');
+            } else {
+              console.log('cxttapstart  on some element');
+            }
+            window.currentEvent = event;
+          });
+
+          let extraCommands = [
+            {
+              content: '<span class="fas fa-bezier-curve fa-2x"></span> Add curve',
+              select: function (ele) {
+                console.log(ele.data('name'));
+
+                var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
+                anchorPointUtilities.currentCtxPos = cyPos;
+                anchorPointUtilities.currentCtxEdge = ele;
+                window.currentEvent.target = ele;
+                cxtAddControlFcn(window.currentEvent);
+              },
+              enabled: true
+            },
+            {
+              content: '<span class="fas fa-chart-line fa-2x"></span> Add corner',
+              select: function (ele) {
+                console.log(ele.data('name'));
+
+                var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
+                anchorPointUtilities.currentCtxPos = cyPos;
+                anchorPointUtilities.currentCtxEdge = ele;
+                window.currentEvent.target = ele;
+                cxtAddBendFcn(window.currentEvent);
+              },
+              enabled: true
+            },
+            {
+              content: '<span class="fas fa-times fa-2x"></span> Remove anchors',
+              select: function (ele) {
+                console.log(ele.data('name'));
+
+                var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
+                anchorPointUtilities.currentCtxPos = cyPos;
+                anchorPointUtilities.currentCtxEdge = ele;
+                window.currentEvent.target = ele;
+                cxtRemoveAllAnchorsFcn(window.currentEvent);
+              },
+              enabled: true
+            }
+          ];
+          opts.cxtmenuOptions.commands = [...opts.cxtmenuOptions.commands, ...extraCommands];
+
+        }
+      }
+
       var _sizeCanvas = debounce(function () {
         $canvasElement
           .attr('height', $container.height())
@@ -401,7 +461,7 @@ module.exports = function (params, cy) {
             'left': 0,
             'z-index': options().zIndex
           })
-        ;
+          ;
 
         setTimeout(function () {
           var canvasBb = $canvasElement.offset();
@@ -412,13 +472,13 @@ module.exports = function (params, cy) {
               'top': -(canvasBb.top - containerBb.top),
               'left': -(canvasBb.left - containerBb.left)
             })
-          ;
+            ;
 
           canvas.getStage().setWidth($container.width());
           canvas.getStage().setHeight($container.height());
 
           // redraw on canvas resize
-          if(cy){
+          if (cy) {
             refreshDraws();
           }
         }, 0);
@@ -434,7 +494,7 @@ module.exports = function (params, cy) {
       $(window).bind('resize', function () {
         sizeCanvas();
       });
-      
+
       // write options to data
       var data = $container.data('cyedgeediting');
       if (data == null) {
@@ -461,47 +521,47 @@ module.exports = function (params, cy) {
           y: y
         };
       }
-      
+
       function refreshDraws() {
 
         // don't clear anchor which is being moved
         anchorManager.clearAnchorsExcept(anchorManager.touchedAnchor);
-        
-        if(endpointShape1 !== null){
+
+        if (endpointShape1 !== null) {
           endpointShape1.destroy();
           endpointShape1 = null;
         }
-        if(endpointShape2 !== null){
+        if (endpointShape2 !== null) {
           endpointShape2.destroy();
           endpointShape2 = null;
         }
         canvas.draw();
 
-        if( edgeToHighlight ) {
+        if (edgeToHighlight) {
           anchorManager.renderAnchorShapes(edgeToHighlight);
           renderEndPointShapes(edgeToHighlight);
         }
       }
-      
+
       // render the end points shapes of the given edge
       function renderEndPointShapes(edge) {
-        if(!edge){
+        if (!edge) {
           return;
         }
 
         var edge_pts = anchorPointUtilities.getAnchorsAsArray(edge);
-        if(typeof edge_pts === 'undefined'){
+        if (typeof edge_pts === 'undefined') {
           edge_pts = [];
-        }       
+        }
         var sourcePos = edge.sourceEndpoint();
         var targetPos = edge.targetEndpoint();
         edge_pts.unshift(sourcePos.y);
         edge_pts.unshift(sourcePos.x);
         edge_pts.push(targetPos.x);
-        edge_pts.push(targetPos.y); 
+        edge_pts.push(targetPos.y);
 
-       
-        if(!edge_pts)
+
+        if (!edge_pts)
           return;
 
         var src = {
@@ -510,8 +570,8 @@ module.exports = function (params, cy) {
         }
 
         var target = {
-          x: edge_pts[edge_pts.length-2],
-          y: edge_pts[edge_pts.length-1]
+          x: edge_pts[edge_pts.length - 2],
+          y: edge_pts[edge_pts.length - 1]
         }
 
         var nextToSource = {
@@ -519,16 +579,16 @@ module.exports = function (params, cy) {
           y: edge_pts[3]
         }
         var nextToTarget = {
-          x: edge_pts[edge_pts.length-4],
-          y: edge_pts[edge_pts.length-3]
+          x: edge_pts[edge_pts.length - 4],
+          y: edge_pts[edge_pts.length - 3]
         }
         var length = getAnchorShapesLength(edge) * 0.65;
-        
-        renderEachEndPointShape(src, target, length,nextToSource,nextToTarget);
-        
+
+        renderEachEndPointShape(src, target, length, nextToSource, nextToTarget);
+
       }
 
-      function renderEachEndPointShape(source, target, length,nextToSource,nextToTarget) {
+      function renderEachEndPointShape(source, target, length, nextToSource, nextToTarget) {
         // get the top left coordinates of source and target
         var sTopLeftX = source.x - length / 2;
         var sTopLeftY = source.y - length / 2;
@@ -536,37 +596,37 @@ module.exports = function (params, cy) {
         var tTopLeftX = target.x - length / 2;
         var tTopLeftY = target.y - length / 2;
 
-        var nextToSourceX = nextToSource.x - length /2;
+        var nextToSourceX = nextToSource.x - length / 2;
         var nextToSourceY = nextToSource.y - length / 2;
 
-        var nextToTargetX = nextToTarget.x - length /2;
-        var nextToTargetY = nextToTarget.y - length /2;
+        var nextToTargetX = nextToTarget.x - length / 2;
+        var nextToTargetY = nextToTarget.y - length / 2;
 
 
         // convert to rendered parameters
-        var renderedSourcePos = convertToRenderedPosition({x: sTopLeftX, y: sTopLeftY});
-        var renderedTargetPos = convertToRenderedPosition({x: tTopLeftX, y: tTopLeftY});
+        var renderedSourcePos = convertToRenderedPosition({ x: sTopLeftX, y: sTopLeftY });
+        var renderedTargetPos = convertToRenderedPosition({ x: tTopLeftX, y: tTopLeftY });
         length = length * cy.zoom() / 2;
 
-        var renderedNextToSource = convertToRenderedPosition({x: nextToSourceX, y: nextToSourceY});
-        var renderedNextToTarget = convertToRenderedPosition({x: nextToTargetX, y: nextToTargetY});
-        
+        var renderedNextToSource = convertToRenderedPosition({ x: nextToSourceX, y: nextToSourceY });
+        var renderedNextToTarget = convertToRenderedPosition({ x: nextToTargetX, y: nextToTargetY });
+
         //how far to go from the node along the edge
         var distanceFromNode = length;
 
-        var distanceSource = Math.sqrt(Math.pow(renderedNextToSource.x - renderedSourcePos.x,2) + Math.pow(renderedNextToSource.y - renderedSourcePos.y,2));        
-        var sourceEndPointX = renderedSourcePos.x + ((distanceFromNode/ distanceSource)* (renderedNextToSource.x - renderedSourcePos.x));
-        var sourceEndPointY = renderedSourcePos.y + ((distanceFromNode/ distanceSource)* (renderedNextToSource.y - renderedSourcePos.y));
+        var distanceSource = Math.sqrt(Math.pow(renderedNextToSource.x - renderedSourcePos.x, 2) + Math.pow(renderedNextToSource.y - renderedSourcePos.y, 2));
+        var sourceEndPointX = renderedSourcePos.x + ((distanceFromNode / distanceSource) * (renderedNextToSource.x - renderedSourcePos.x));
+        var sourceEndPointY = renderedSourcePos.y + ((distanceFromNode / distanceSource) * (renderedNextToSource.y - renderedSourcePos.y));
 
 
-        var distanceTarget = Math.sqrt(Math.pow(renderedNextToTarget.x - renderedTargetPos.x,2) + Math.pow(renderedNextToTarget.y - renderedTargetPos.y,2));        
-        var targetEndPointX = renderedTargetPos.x + ((distanceFromNode/ distanceTarget)* (renderedNextToTarget.x - renderedTargetPos.x));
-        var targetEndPointY = renderedTargetPos.y + ((distanceFromNode/ distanceTarget)* (renderedNextToTarget.y - renderedTargetPos.y)); 
+        var distanceTarget = Math.sqrt(Math.pow(renderedNextToTarget.x - renderedTargetPos.x, 2) + Math.pow(renderedNextToTarget.y - renderedTargetPos.y, 2));
+        var targetEndPointX = renderedTargetPos.x + ((distanceFromNode / distanceTarget) * (renderedNextToTarget.x - renderedTargetPos.x));
+        var targetEndPointY = renderedTargetPos.y + ((distanceFromNode / distanceTarget) * (renderedNextToTarget.y - renderedTargetPos.y));
 
         // render end point shape for source and target
         // the null checks are not theoretically required
         // but they protect from bad synchronious calls of refreshDraws()
-        if(endpointShape1 === null){
+        if (endpointShape1 === null) {
           endpointShape1 = new Konva.Circle({
             x: sourceEndPointX + length,
             y: sourceEndPointY + length,
@@ -575,7 +635,7 @@ module.exports = function (params, cy) {
           });
         }
 
-        if(endpointShape2 === null){
+        if (endpointShape2 === null) {
           endpointShape2 = new Konva.Circle({
             x: targetEndPointX + length,
             y: targetEndPointY + length,
@@ -587,7 +647,7 @@ module.exports = function (params, cy) {
         canvas.add(endpointShape1);
         canvas.add(endpointShape2);
         canvas.draw();
-        
+
       }
 
       // get the length of anchor points to be rendered
@@ -595,16 +655,16 @@ module.exports = function (params, cy) {
         var factor = options().anchorShapeSizeFactor;
         if (parseFloat(edge.css('width')) <= 2.5)
           return 2.5 * factor;
-        else return parseFloat(edge.css('width'))*factor;
+        else return parseFloat(edge.css('width')) * factor;
       }
-      
+
       // check if the anchor represented by {x, y} is inside the point shape
-      function checkIfInsideShape(x, y, length, centerX, centerY){
+      function checkIfInsideShape(x, y, length, centerX, centerY) {
         var minX = centerX - length / 2;
         var maxX = centerX + length / 2;
         var minY = centerY - length / 2;
         var maxY = centerY + length / 2;
-        
+
         var inside = (x >= minX && x <= maxX) && (y >= minY && y <= maxY);
         return inside;
       }
@@ -613,24 +673,24 @@ module.exports = function (params, cy) {
       function getContainingShapeIndex(x, y, edge) {
         var type = anchorPointUtilities.getEdgeType(edge);
 
-        if(type === 'inconclusive'){
+        if (type === 'inconclusive') {
           return -1;
         }
 
-        if(edge.data(anchorPointUtilities.syntax[type]['weight']) == null || 
-          edge.data(anchorPointUtilities.syntax[type]['weight']).length == 0){
+        if (edge.data(anchorPointUtilities.syntax[type]['weight']) == null ||
+          edge.data(anchorPointUtilities.syntax[type]['weight']).length == 0) {
           return -1;
         }
 
         var anchorList = anchorPointUtilities.getAnchorsAsArray(edge);//edge._private.rdata.segpts;
         var length = getAnchorShapesLength(edge);
 
-        for(var i = 0; anchorList && i < anchorList.length; i = i + 2){
+        for (var i = 0; anchorList && i < anchorList.length; i = i + 2) {
           var anchorX = anchorList[i];
           var anchorY = anchorList[i + 1];
 
           var inside = checkIfInsideShape(x, y, length, anchorX, anchorY);
-          if(inside){
+          if (inside) {
             return i / 2;
           }
         }
@@ -638,7 +698,7 @@ module.exports = function (params, cy) {
         return -1;
       };
 
-      function getContainingEndPoint(x, y, edge){
+      function getContainingEndPoint(x, y, edge) {
         var length = getAnchorShapesLength(edge);
         var allPts = edge._private.rscratch.allpts;
         var src = {
@@ -646,21 +706,21 @@ module.exports = function (params, cy) {
           y: allPts[1]
         }
         var target = {
-          x: allPts[allPts.length-2],
-          y: allPts[allPts.length-1]
+          x: allPts[allPts.length - 2],
+          y: allPts[allPts.length - 1]
         }
         convertToRenderedPosition(src);
         convertToRenderedPosition(target);
-        
+
         // Source:0, Target:1, None:-1
-        if(checkIfInsideShape(x, y, length, src.x, src.y))
+        if (checkIfInsideShape(x, y, length, src.x, src.y))
           return 0;
-        else if(checkIfInsideShape(x, y, length, target.x, target.y))
+        else if (checkIfInsideShape(x, y, length, target.x, target.y))
           return 1;
         else
           return -1;
       }
-      
+
       // store the current status of gestures and set them to false
       function disableGestures() {
         lastPanningEnabled = cy.panningEnabled();
@@ -671,7 +731,7 @@ module.exports = function (params, cy) {
           .panningEnabled(false)
           .boxSelectionEnabled(false);
       }
-      
+
       // reset the gestures by their latest status
       function resetGestures() {
         cy.zoomingEnabled(lastZoomingEnabled)
@@ -679,9 +739,9 @@ module.exports = function (params, cy) {
           .boxSelectionEnabled(lastBoxSelectionEnabled);
       }
 
-      function turnOffActiveBgColor(){
+      function turnOffActiveBgColor() {
         // found this at the cy-node-resize code, but doesn't seem to find the object most of the time
-        if( cy.style()._private.coreStyle["active-bg-opacity"]) {
+        if (cy.style()._private.coreStyle["active-bg-opacity"]) {
           lastActiveBgOpacity = cy.style()._private.coreStyle["active-bg-opacity"].value;
         }
         else {
@@ -696,7 +756,7 @@ module.exports = function (params, cy) {
           .update();
       }
 
-      function resetActiveBgColor(){
+      function resetActiveBgColor() {
         cy.style()
           .selector("core")
           .style("active-bg-opacity", lastActiveBgOpacity)
@@ -704,96 +764,94 @@ module.exports = function (params, cy) {
       }
 
       function moveAnchorPoints(positionDiff, edges) {
-          edges.forEach(function( edge ){
-              var previousAnchorsPosition = anchorPointUtilities.getAnchorsAsArray(edge);
-              var nextAnchorPointsPosition = [];
-              if (previousAnchorsPosition != undefined)
-              {
-                for (var i=0; i<previousAnchorsPosition.length; i+=2)
-                {
-                    nextAnchorPointsPosition.push({x: previousAnchorsPosition[i]+positionDiff.x, y: previousAnchorsPosition[i+1]+positionDiff.y});
-                }
-                var type = anchorPointUtilities.getEdgeType(edge);
+        edges.forEach(function (edge) {
+          var previousAnchorsPosition = anchorPointUtilities.getAnchorsAsArray(edge);
+          var nextAnchorPointsPosition = [];
+          if (previousAnchorsPosition != undefined) {
+            for (var i = 0; i < previousAnchorsPosition.length; i += 2) {
+              nextAnchorPointsPosition.push({ x: previousAnchorsPosition[i] + positionDiff.x, y: previousAnchorsPosition[i + 1] + positionDiff.y });
+            }
+            var type = anchorPointUtilities.getEdgeType(edge);
 
-                if(anchorPointUtilities.edgeTypeInconclusiveShouldntHappen(type, "UiUtilities.js, moveAnchorPoints")){
-                  return;
-                }
+            if (anchorPointUtilities.edgeTypeInconclusiveShouldntHappen(type, "UiUtilities.js, moveAnchorPoints")) {
+              return;
+            }
 
-                edge.data(anchorPointUtilities.syntax[type]['pointPos'], nextAnchorPointsPosition);
-              }
-          });
-          anchorPointUtilities.initAnchorPoints(options().bendPositionsFunction, options().controlPositionsFunction, edges);
-          
-          // Listener defined in other extension
-          // Might have compatibility issues after the unbundled bezier
-          cy.trigger('bendPointMovement'); 
+            edge.data(anchorPointUtilities.syntax[type]['pointPos'], nextAnchorPointsPosition);
+          }
+        });
+        anchorPointUtilities.initAnchorPoints(options().bendPositionsFunction, options().controlPositionsFunction, edges);
+
+        // Listener defined in other extension
+        // Might have compatibility issues after the unbundled bezier
+        cy.trigger('bendPointMovement');
       }
 
-      function moveAnchorOnDrag(edge, type, index, position){
+      function moveAnchorOnDrag(edge, type, index, position) {
         var weights = edge.data(anchorPointUtilities.syntax[type]['weight']);
         var distances = edge.data(anchorPointUtilities.syntax[type]['distance']);
-        
+
         var relativeAnchorPosition = anchorPointUtilities.convertToRelativePosition(edge, position);
         weights[index] = relativeAnchorPosition.weight;
         distances[index] = relativeAnchorPosition.distance;
-        
+
         edge.data(anchorPointUtilities.syntax[type]['weight'], weights);
         edge.data(anchorPointUtilities.syntax[type]['distance'], distances);
       }
 
       // debounced due to large amout of calls to tapdrag
-      var _moveAnchorOnDrag = debounce( moveAnchorOnDrag, 5);
+      var _moveAnchorOnDrag = debounce(moveAnchorOnDrag, 5);
 
-      {  
+      {
         lastPanningEnabled = cy.panningEnabled();
         lastZoomingEnabled = cy.zoomingEnabled();
         lastBoxSelectionEnabled = cy.boxSelectionEnabled();
-        
+
         // Initilize the edgeToHighlightBends and numberOfSelectedEdges
         {
           var selectedEdges = cy.edges(':selected');
           var numberOfSelectedEdges = selectedEdges.length;
-          
-          if ( numberOfSelectedEdges === 1 ) {
+
+          if (numberOfSelectedEdges === 1) {
             edgeToHighlight = selectedEdges[0];
           }
         }
-        
+
         cy.bind('zoom pan', eZoom = function () {
-          if ( !edgeToHighlight ) {
+          if (!edgeToHighlight) {
             return;
           }
-          
+
           refreshDraws();
         });
 
         // cy.off is never called on this listener
-        cy.on('data', 'edge',  function () {
-          if ( !edgeToHighlight ) {
+        cy.on('data', 'edge', function () {
+          if (!edgeToHighlight) {
             return;
           }
-          
+
           refreshDraws();
         });
 
         cy.on('style', 'edge.edgebendediting-hasbendpoints:selected, edge.edgecontrolediting-hascontrolpoints:selected', eStyle = function () {
-          setTimeout(function(){refreshDraws()}, 50);
+          setTimeout(function () { refreshDraws() }, 50);
         });
 
         cy.on('remove', 'edge', eRemove = function () {
           var edge = this;
           if (edge.selected()) {
             numberOfSelectedEdges = numberOfSelectedEdges - 1;
-            
+
             cy.startBatch();
-            
+
             if (edgeToHighlight) {
               edgeToHighlight.removeClass('cy-edge-editing-highlight');
             }
-            
+
             if (numberOfSelectedEdges === 1) {
               var selectedEdges = cy.edges(':selected');
-              
+
               // If user removes all selected edges at a single operation then our 'numberOfSelectedEdges'
               // may be misleading. Therefore we need to check if the number of edges to highlight is realy 1 here.
               if (selectedEdges.length === 1) {
@@ -807,23 +865,23 @@ module.exports = function (params, cy) {
             else {
               edgeToHighlight = undefined;
             }
-            
+
             cy.endBatch();
           }
           refreshDraws();
         });
-        
-         cy.on('add', 'edge', eAdd = function () {
+
+        cy.on('add', 'edge', eAdd = function () {
           var edge = this;
           if (edge.selected()) {
             numberOfSelectedEdges = numberOfSelectedEdges + 1;
-            
+
             cy.startBatch();
-            
+
             if (edgeToHighlight) {
               edgeToHighlight.removeClass('cy-edge-editing-highlight');
             }
-            
+
             if (numberOfSelectedEdges === 1) {
               edgeToHighlight = edge;
               edgeToHighlight.addClass('cy-edge-editing-highlight');
@@ -831,28 +889,28 @@ module.exports = function (params, cy) {
             else {
               edgeToHighlight = undefined;
             }
-            
+
             cy.endBatch();
           }
           refreshDraws();
         });
-        
+
         cy.on('select', 'edge', eSelect = function () {
           var edge = this;
 
-          if(edge.target().connectedEdges().length == 0 || edge.source().connectedEdges().length == 0){
+          if (edge.target().connectedEdges().length == 0 || edge.source().connectedEdges().length == 0) {
             return;
           }
 
-         
+
           numberOfSelectedEdges = numberOfSelectedEdges + 1;
-          
+
           cy.startBatch();
-            
+
           if (edgeToHighlight) {
             edgeToHighlight.removeClass('cy-edge-editing-highlight');
           }
-            
+
           if (numberOfSelectedEdges === 1) {
             edgeToHighlight = edge;
             edgeToHighlight.addClass('cy-edge-editing-highlight');
@@ -860,23 +918,26 @@ module.exports = function (params, cy) {
           else {
             edgeToHighlight = undefined;
           }
-          
+
           cy.endBatch();
           refreshDraws();
         });
-        
+
         cy.on('unselect', 'edge', eUnselect = function () {
+          if (cy.autolock()) {
+            return;
+          }
           numberOfSelectedEdges = numberOfSelectedEdges - 1;
-            
+
           cy.startBatch();
-            
+
           if (edgeToHighlight) {
             edgeToHighlight.removeClass('cy-edge-editing-highlight');
           }
-            
+
           if (numberOfSelectedEdges === 1) {
             var selectedEdges = cy.edges(':selected');
-            
+
             // If user unselects all edges by tapping to the core etc. then our 'numberOfSelectedEdges'
             // may be misleading. Therefore we need to check if the number of edges to highlight is realy 1 here.
             if (selectedEdges.length === 1) {
@@ -890,11 +951,11 @@ module.exports = function (params, cy) {
           else {
             edgeToHighlight = undefined;
           }
-          
+
           cy.endBatch();
           refreshDraws();
         });
-        
+
         var movedAnchorIndex;
         var tapStartPos;
         var movedEdge;
@@ -906,7 +967,7 @@ module.exports = function (params, cy) {
         var nodeToAttach;
         var anchorCreatedByDrag = false;
 
-        cy.on('tapstart', eTapStart = function(event) {
+        cy.on('tapstart', eTapStart = function (event) {
           tapStartPos = event.position || event.cyPosition;
         });
 
@@ -917,29 +978,29 @@ module.exports = function (params, cy) {
             createAnchorOnDrag = false;
             return;
           }
-          
+
           movedEdge = edge;
 
           var type = anchorPointUtilities.getEdgeType(edge);
 
           // to avoid errors
-          if(type === 'inconclusive')
+          if (type === 'inconclusive')
             type = 'bend';
-          
+
           var cyPosX = tapStartPos.x;
           var cyPosY = tapStartPos.y;
-          
+
           // Get which end point has been clicked (Source:0, Target:1, None:-1)
           var endPoint = getContainingEndPoint(cyPosX, cyPosY, edge);
 
-          if(endPoint == 0 || endPoint == 1){
+          if (endPoint == 0 || endPoint == 1) {
             edge.unselect();
             movedEndPoint = endPoint;
             detachedNode = (endPoint == 0) ? movedEdge.source() : movedEdge.target();
 
             var disconnectedEnd = (endPoint == 0) ? 'source' : 'target';
             var result = reconnectionUtilities.disconnectEdge(movedEdge, cy, event.renderedPosition, disconnectedEnd);
-            
+
             dummyNode = result.dummyNode;
             movedEdge = result.edge;
 
@@ -950,13 +1011,13 @@ module.exports = function (params, cy) {
             createAnchorOnDrag = true;
           }
         });
-        
+
         cy.on('drag', 'node', eDrag = function (event) {
           var node = this;
           cy.edges().unselect();
-          if(!node.selected()){
+          if (!node.selected()) {
             cy.nodes().unselect();
-          }         
+          }
         });
         cy.on('tapdrag', eTapDrag = function (event) {
           /** 
@@ -969,13 +1030,13 @@ module.exports = function (params, cy) {
           }
           var edge = movedEdge;
 
-          if(movedEdge !== undefined && anchorPointUtilities.isIgnoredEdge(edge) ) {
+          if (movedEdge !== undefined && anchorPointUtilities.isIgnoredEdge(edge)) {
             return;
           }
 
           var type = anchorPointUtilities.getEdgeType(edge);
 
-          if(createAnchorOnDrag && !anchorTouched && type !== 'inconclusive') {
+          if (createAnchorOnDrag && !anchorTouched && type !== 'inconclusive') {
             // remember state before creating anchor
             var weightStr = anchorPointUtilities.syntax[type]['weight'];
             var distanceStr = anchorPointUtilities.syntax[type]['distance'];
@@ -1001,7 +1062,7 @@ module.exports = function (params, cy) {
           }
 
           // if the tapstart did not hit an edge and it did not hit an anchor
-          if (!anchorTouched && (movedEdge === undefined || 
+          if (!anchorTouched && (movedEdge === undefined ||
             (movedAnchorIndex === undefined && movedEndPoint === undefined))) {
             return;
           }
@@ -1009,27 +1070,27 @@ module.exports = function (params, cy) {
           var eventPos = event.position || event.cyPosition;
 
           // Update end point location (Source:0, Target:1)
-          if(movedEndPoint != -1 && dummyNode){
+          if (movedEndPoint != -1 && dummyNode) {
             dummyNode.position(eventPos);
           }
           // change location of anchor created by drag
-          else if(movedAnchorIndex != undefined){
+          else if (movedAnchorIndex != undefined) {
             _moveAnchorOnDrag(edge, type, movedAnchorIndex, eventPos);
           }
           // change location of drag and dropped anchor
-          else if(anchorTouched){
+          else if (anchorTouched) {
 
             // the tapStartPos check is necessary when righ clicking anchor points
             // right clicking anchor points triggers MouseDown for Konva, but not tapstart for cy
             // when that happens tapStartPos is undefined
-            if(anchorManager.touchedAnchorIndex === undefined && tapStartPos){
+            if (anchorManager.touchedAnchorIndex === undefined && tapStartPos) {
               anchorManager.touchedAnchorIndex = getContainingShapeIndex(
-                tapStartPos.x, 
+                tapStartPos.x,
                 tapStartPos.y,
                 anchorManager.edge);
             }
 
-            if(anchorManager.touchedAnchorIndex !== undefined){
+            if (anchorManager.touchedAnchorIndex !== undefined) {
               _moveAnchorOnDrag(
                 anchorManager.edge,
                 anchorManager.edgeType,
@@ -1038,58 +1099,58 @@ module.exports = function (params, cy) {
               );
             }
           }
-          
-          if(event.target && event.target[0] && event.target.isNode()){
+
+          if (event.target && event.target[0] && event.target.isNode()) {
             nodeToAttach = event.target;
           }
 
         });
-        
+
         cy.on('tapend', eTapEnd = function (event) {
 
-          if(mouseOut){
+          if (mouseOut) {
             canvas.getStage().fire("contentMouseup");
           }
 
-          var edge = movedEdge || anchorManager.edge; 
-          
-          if( edge !== undefined ) {
+          var edge = movedEdge || anchorManager.edge;
+
+          if (edge !== undefined) {
             var index = anchorManager.touchedAnchorIndex;
-            if( index != undefined ) {
+            if (index != undefined) {
               var startX = edge.source().position('x');
               var startY = edge.source().position('y');
               var endX = edge.target().position('x');
               var endY = edge.target().position('y');
-              
+
               var anchorList = anchorPointUtilities.getAnchorsAsArray(edge);
               var allAnchors = [startX, startY].concat(anchorList).concat([endX, endY]);
-              
+
               var anchorIndex = index + 1;
               var preIndex = anchorIndex - 1;
               var posIndex = anchorIndex + 1;
-              
+
               var anchor = {
                 x: allAnchors[2 * anchorIndex],
                 y: allAnchors[2 * anchorIndex + 1]
               };
-              
+
               var preAnchorPoint = {
                 x: allAnchors[2 * preIndex],
                 y: allAnchors[2 * preIndex + 1]
               };
-              
+
               var posAnchorPoint = {
                 x: allAnchors[2 * posIndex],
                 y: allAnchors[2 * posIndex + 1]
               };
-              
+
               var nearToLine;
-              
-              if( ( anchor.x === preAnchorPoint.x && anchor.y === preAnchorPoint.y ) || ( anchor.x === preAnchorPoint.x && anchor.y === preAnchorPoint.y ) ) {
+
+              if ((anchor.x === preAnchorPoint.x && anchor.y === preAnchorPoint.y) || (anchor.x === preAnchorPoint.x && anchor.y === preAnchorPoint.y)) {
                 nearToLine = true;
               }
               else {
-                var m1 = ( preAnchorPoint.y - posAnchorPoint.y ) / ( preAnchorPoint.x - posAnchorPoint.x );
+                var m1 = (preAnchorPoint.y - posAnchorPoint.y) / (preAnchorPoint.x - posAnchorPoint.x);
                 var m2 = -1 / m1;
 
                 var srcTgtPointsAndTangents = {
@@ -1100,34 +1161,33 @@ module.exports = function (params, cy) {
                 };
 
                 var currentIntersection = anchorPointUtilities.getIntersection(edge, anchor, srcTgtPointsAndTangents);
-                var dist = Math.sqrt( Math.pow( (anchor.x - currentIntersection.x), 2 ) 
-                        + Math.pow( (anchor.y - currentIntersection.y), 2 ));
-                
+                var dist = Math.sqrt(Math.pow((anchor.x - currentIntersection.x), 2)
+                  + Math.pow((anchor.y - currentIntersection.y), 2));
+
                 // remove the bend point if segment edge becomes straight
                 var type = anchorPointUtilities.getEdgeType(edge);
-                if( (type === 'bend' && dist  < options().bendRemovalSensitivity)) {
+                if ((type === 'bend' && dist < options().bendRemovalSensitivity)) {
                   nearToLine = true;
                 }
-                
+
               }
-              
-              if( nearToLine )
-              {
+
+              if (nearToLine) {
                 anchorPointUtilities.removeAnchor(edge, index);
               }
-              
+
             }
-            else if(dummyNode != undefined && (movedEndPoint == 0 || movedEndPoint == 1) ){
-              
+            else if (dummyNode != undefined && (movedEndPoint == 0 || movedEndPoint == 1)) {
+
               var newNode = detachedNode;
               var isValid = 'valid';
               var location = (movedEndPoint == 0) ? 'source' : 'target';
 
               // validate edge reconnection
-              if(nodeToAttach){
+              if (nodeToAttach) {
                 var newSource = (movedEndPoint == 0) ? nodeToAttach : edge.source();
                 var newTarget = (movedEndPoint == 1) ? nodeToAttach : edge.target();
-                if(typeof validateEdge === "function")
+                if (typeof validateEdge === "function")
                   isValid = validateEdge(edge, newSource, newTarget);
                 newNode = (isValid === 'valid') ? nodeToAttach : detachedNode;
               }
@@ -1136,18 +1196,18 @@ module.exports = function (params, cy) {
               var newTarget = (movedEndPoint == 1) ? newNode : edge.target();
               edge = reconnectionUtilities.connectEdge(edge, detachedNode, location);
 
-              if(detachedNode.id() !== newNode.id()){
+              if (detachedNode.id() !== newNode.id()) {
                 // use given handleReconnectEdge function 
-                if(typeof handleReconnectEdge === 'function'){
+                if (typeof handleReconnectEdge === 'function') {
                   var reconnectedEdge = handleReconnectEdge(newSource.id(), newTarget.id(), edge.data());
-                  
-                  if(reconnectedEdge){
+
+                  if (reconnectedEdge) {
                     reconnectionUtilities.copyEdge(edge, reconnectedEdge);
-                    anchorPointUtilities.initAnchorPoints(options().bendPositionsFunction, 
-                                              options().controlPositionsFunction, [reconnectedEdge]);
+                    anchorPointUtilities.initAnchorPoints(options().bendPositionsFunction,
+                      options().controlPositionsFunction, [reconnectedEdge]);
                   }
-                  
-                  if(reconnectedEdge && options().undoable){
+
+                  if (reconnectedEdge && options().undoable) {
                     var params = {
                       newEdge: reconnectedEdge,
                       oldEdge: edge
@@ -1155,16 +1215,16 @@ module.exports = function (params, cy) {
                     cy.undoRedo().do('removeReconnectedEdge', params);
                     edge = reconnectedEdge;
                   }
-                  else if(reconnectedEdge){
+                  else if (reconnectedEdge) {
                     cy.remove(edge);
                     edge = reconnectedEdge;
                   }
                 }
-                else{
-                  var loc = (movedEndPoint == 0) ? {source: newNode.id()} : {target: newNode.id()};
-                  var oldLoc = (movedEndPoint == 0) ? {source: detachedNode.id()} : {target: detachedNode.id()};
-                  
-                  if(options().undoable && newNode.id() !== detachedNode.id()) {
+                else {
+                  var loc = (movedEndPoint == 0) ? { source: newNode.id() } : { target: newNode.id() };
+                  var oldLoc = (movedEndPoint == 0) ? { source: detachedNode.id() } : { target: detachedNode.id() };
+
+                  if (options().undoable && newNode.id() !== detachedNode.id()) {
                     var param = {
                       edge: edge,
                       location: loc,
@@ -1174,11 +1234,11 @@ module.exports = function (params, cy) {
                     edge = result.edge;
                     //edge.select();
                   }
-                }  
+                }
               }
 
               // invalid edge reconnection callback
-              if(isValid !== 'valid' && typeof actOnUnsuccessfulReconnection === 'function'){
+              if (isValid !== 'valid' && typeof actOnUnsuccessfulReconnection === 'function') {
                 actOnUnsuccessfulReconnection();
               }
               edge.select();
@@ -1188,31 +1248,31 @@ module.exports = function (params, cy) {
           var type = anchorPointUtilities.getEdgeType(edge);
 
           // to avoid errors
-          if(type === 'inconclusive'){
+          if (type === 'inconclusive') {
             type = 'bend';
           }
 
-          if(anchorManager.touchedAnchorIndex === undefined && !anchorCreatedByDrag){
+          if (anchorManager.touchedAnchorIndex === undefined && !anchorCreatedByDrag) {
             moveAnchorParam = undefined;
           }
 
           var weightStr = anchorPointUtilities.syntax[type]['weight'];
-          if (edge !== undefined && moveAnchorParam !== undefined && 
+          if (edge !== undefined && moveAnchorParam !== undefined &&
             (edge.data(weightStr) ? edge.data(weightStr).toString() : null) != moveAnchorParam.weights.toString()) {
-            
-            // anchor created from drag
-            if(anchorCreatedByDrag){
-            edge.select(); 
 
-            // stops the unbundled bezier edges from being unselected
-            cy.autounselectify(true);
+            // anchor created from drag
+            if (anchorCreatedByDrag) {
+              edge.select();
+
+              // stops the unbundled bezier edges from being unselected
+              cy.autounselectify(true);
             }
 
-            if(options().undoable) {
+            if (options().undoable) {
               cy.undoRedo().do('changeAnchorPoints', moveAnchorParam);
             }
           }
-          
+
           movedAnchorIndex = undefined;
           movedEdge = undefined;
           moveAnchorParam = undefined;
@@ -1224,10 +1284,10 @@ module.exports = function (params, cy) {
           tapStartPos = undefined;
           anchorCreatedByDrag = false;
 
-          anchorManager.touchedAnchorIndex = undefined; 
+          anchorManager.touchedAnchorIndex = undefined;
 
           resetGestures();
-          setTimeout(function(){refreshDraws()}, 50);
+          setTimeout(function () { refreshDraws() }, 50);
         });
 
         //Variables used for starting and ending the movement of anchor points with arrows
@@ -1236,78 +1296,75 @@ module.exports = function (params, cy) {
         var edgeContainingFirstAnchor;
         var firstAnchorPointFound;
         cy.on("edgeediting.movestart", function (e, edges) {
-            firstAnchorPointFound = false;
-            if (edges[0] != undefined)
-            {
-                edges.forEach(function( edge ){
-                  if (anchorPointUtilities.getAnchorsAsArray(edge) != undefined && !firstAnchorPointFound)
-                  {
-                      firstAnchor = { x: anchorPointUtilities.getAnchorsAsArray(edge)[0], y: anchorPointUtilities.getAnchorsAsArray(edge)[1]};
-                      moveanchorparam = {
-                          firstTime: true,
-                          firstAnchorPosition: {
-                              x: firstAnchor.x,
-                              y: firstAnchor.y
-                          },
-                          edges: edges
-                      };
-                      edgeContainingFirstAnchor = edge;
-                      firstAnchorPointFound = true;
-                  }
-                });
-            }
+          firstAnchorPointFound = false;
+          if (edges[0] != undefined) {
+            edges.forEach(function (edge) {
+              if (anchorPointUtilities.getAnchorsAsArray(edge) != undefined && !firstAnchorPointFound) {
+                firstAnchor = { x: anchorPointUtilities.getAnchorsAsArray(edge)[0], y: anchorPointUtilities.getAnchorsAsArray(edge)[1] };
+                moveanchorparam = {
+                  firstTime: true,
+                  firstAnchorPosition: {
+                    x: firstAnchor.x,
+                    y: firstAnchor.y
+                  },
+                  edges: edges
+                };
+                edgeContainingFirstAnchor = edge;
+                firstAnchorPointFound = true;
+              }
+            });
+          }
         });
 
         cy.on("edgeediting.moveend", function (e, edges) {
-            if (moveanchorparam != undefined)
-            {
-                var initialPos = moveanchorparam.firstAnchorPosition;
-                var movedFirstAnchor = {
-                    x: anchorPointUtilities.getAnchorsAsArray(edgeContainingFirstAnchor)[0],
-                    y: anchorPointUtilities.getAnchorsAsArray(edgeContainingFirstAnchor)[1]
-                };
+          if (moveanchorparam != undefined) {
+            var initialPos = moveanchorparam.firstAnchorPosition;
+            var movedFirstAnchor = {
+              x: anchorPointUtilities.getAnchorsAsArray(edgeContainingFirstAnchor)[0],
+              y: anchorPointUtilities.getAnchorsAsArray(edgeContainingFirstAnchor)[1]
+            };
 
 
-                moveanchorparam.positionDiff = {
-                    x: -movedFirstAnchor.x + initialPos.x,
-                    y: -movedFirstAnchor.y + initialPos.y
-                }
-
-                delete moveanchorparam.firstAnchorPosition;
-
-                if(options().undoable) {
-                    cy.undoRedo().do("moveAnchorPoints", moveanchorparam);
-                }
-
-                moveanchorparam = undefined;
+            moveanchorparam.positionDiff = {
+              x: -movedFirstAnchor.x + initialPos.x,
+              y: -movedFirstAnchor.y + initialPos.y
             }
+
+            delete moveanchorparam.firstAnchorPosition;
+
+            if (options().undoable) {
+              cy.undoRedo().do("moveAnchorPoints", moveanchorparam);
+            }
+
+            moveanchorparam = undefined;
+          }
         });
 
         cy.on('cxttap', eCxtTap = function (event) {
           var target = event.target || event.cyTarget;
           var targetIsEdge = false;
 
-          try{
+          try {
             targetIsEdge = target.isEdge();
           }
-          catch(err){
+          catch (err) {
             // this is here just to suppress the error
           }
 
           var edge, type;
-          if(targetIsEdge){
+          if (targetIsEdge) {
             edge = target;
             type = anchorPointUtilities.getEdgeType(edge);
           }
-          else{
-            edge = anchorManager.edge;          
+          else {
+            edge = anchorManager.edge;
             type = anchorManager.edgeType;
           }
 
           var menus = cy.contextMenus('get'); // get context menus instance
-          
-          if(!edgeToHighlight || edgeToHighlight.id() != edge.id() || anchorPointUtilities.isIgnoredEdge(edge) ||
-              edgeToHighlight !== edge) {
+
+          if (!edgeToHighlight || edgeToHighlight.id() != edge.id() || anchorPointUtilities.isIgnoredEdge(edge) ||
+            edgeToHighlight !== edge) {
             menus.hideMenuItem(removeBendPointCxtMenuId);
             menus.hideMenuItem(addBendPointCxtMenuId);
             menus.hideMenuItem(removeControlPointCxtMenuId);
@@ -1321,15 +1378,15 @@ module.exports = function (params, cy) {
           if (selectedIndex == -1) {
             menus.hideMenuItem(removeBendPointCxtMenuId);
             menus.hideMenuItem(removeControlPointCxtMenuId);
-            if(type === 'control' && targetIsEdge){
+            if (type === 'control' && targetIsEdge) {
               menus.showMenuItem(addControlPointCxtMenuId);
               menus.hideMenuItem(addBendPointCxtMenuId);
             }
-            else if(type === 'bend' && targetIsEdge){
+            else if (type === 'bend' && targetIsEdge) {
               menus.showMenuItem(addBendPointCxtMenuId);
               menus.hideMenuItem(addControlPointCxtMenuId);
             }
-            else if (targetIsEdge){
+            else if (targetIsEdge) {
               menus.showMenuItem(addBendPointCxtMenuId);
               menus.showMenuItem(addControlPointCxtMenuId);
             }
@@ -1343,19 +1400,19 @@ module.exports = function (params, cy) {
           else {
             menus.hideMenuItem(addBendPointCxtMenuId);
             menus.hideMenuItem(addControlPointCxtMenuId);
-            if(type === 'control'){
+            if (type === 'control') {
               menus.showMenuItem(removeControlPointCxtMenuId);
               menus.hideMenuItem(removeBendPointCxtMenuId);
-              if (opts.enableMultipleAnchorRemovalOption && 
-                  edge.hasClass('edgecontrolediting-hasmultiplecontrolpoints')) {
+              if (opts.enableMultipleAnchorRemovalOption &&
+                edge.hasClass('edgecontrolediting-hasmultiplecontrolpoints')) {
                 menus.showMenuItem(removeAllControlPointCtxMenuId);
               }
             }
-            else if(type === 'bend'){
+            else if (type === 'bend') {
               menus.showMenuItem(removeBendPointCxtMenuId);
               menus.hideMenuItem(removeControlPointCxtMenuId);
             }
-            else{
+            else {
               menus.hideMenuItem(removeBendPointCxtMenuId);
               menus.hideMenuItem(removeControlPointCxtMenuId);
               menus.hideMenuItem(removeAllControlPointCtxMenuId);
@@ -1365,20 +1422,20 @@ module.exports = function (params, cy) {
 
           anchorPointUtilities.currentCtxEdge = edge;
         });
-        
-        cy.on('cyedgeediting.changeAnchorPoints', 'edge', function() {
+
+        cy.on('cyedgeediting.changeAnchorPoints', 'edge', function () {
           var edge = this;
           cy.startBatch();
-          cy.edges().unselect(); 
-                    
+          cy.edges().unselect();
+
           // Listener defined in other extension
           // Might have compatibility issues after the unbundled bezier    
-          cy.trigger('bendPointMovement');    
-          
-          cy.endBatch();          
+          cy.trigger('bendPointMovement');
+
+          cy.endBatch();
           refreshDraws();
-        
-          
+
+
         });
       }
 
@@ -1397,106 +1454,103 @@ module.exports = function (params, cy) {
 
       function keyDown(e) {
 
-          var shouldMove = typeof options().moveSelectedAnchorsOnKeyEvents === 'function'
-              ? options().moveSelectedAnchorsOnKeyEvents() : options().moveSelectedAnchorsOnKeyEvents;
+        var shouldMove = typeof options().moveSelectedAnchorsOnKeyEvents === 'function'
+          ? options().moveSelectedAnchorsOnKeyEvents() : options().moveSelectedAnchorsOnKeyEvents;
 
-          if (!shouldMove) {
-              return;
+        if (!shouldMove) {
+          return;
+        }
+
+        //Checks if the tagname is textarea or input
+        var tn = document.activeElement.tagName;
+        if (tn != "TEXTAREA" && tn != "INPUT") {
+          switch (e.keyCode) {
+            case 37: case 39: case 38: case 40: // Arrow keys
+            case 32: e.preventDefault(); break; // Space
+            default: break; // do not block other keys
+          }
+          if (e.keyCode < '37' || e.keyCode > '40') {
+            return;
+          }
+          keys[e.keyCode] = true;
+
+          //Checks if only edges are selected (not any node) and if only 1 edge is selected
+          //If the second checking is removed the anchors of multiple edges would move
+          if (cy.edges(":selected").length != cy.elements(":selected").length || cy.edges(":selected").length != 1) {
+            return;
+          }
+          if (!anchorsMoving) {
+            selectedEdges = cy.edges(':selected');
+            cy.trigger("edgeediting.movestart", [selectedEdges]);
+            anchorsMoving = true;
+          }
+          var moveSpeed = 3;
+
+          // doesn't make sense if alt and shift both pressed
+          if (e.altKey && e.shiftKey) {
+            return;
+          }
+          else if (e.altKey) {
+            moveSpeed = 1;
+          }
+          else if (e.shiftKey) {
+            moveSpeed = 10;
           }
 
-          //Checks if the tagname is textarea or input
-          var tn = document.activeElement.tagName;
-          if (tn != "TEXTAREA" && tn != "INPUT")
-          {
-              switch(e.keyCode){
-                  case 37: case 39: case 38:  case 40: // Arrow keys
-                  case 32: e.preventDefault(); break; // Space
-                  default: break; // do not block other keys
-              }
-              if (e.keyCode < '37' || e.keyCode > '40') {
-                  return;
-              }
-              keys[e.keyCode] = true;
+          var upArrowCode = 38;
+          var downArrowCode = 40;
+          var leftArrowCode = 37;
+          var rightArrowCode = 39;
 
-              //Checks if only edges are selected (not any node) and if only 1 edge is selected
-              //If the second checking is removed the anchors of multiple edges would move
-              if (cy.edges(":selected").length != cy.elements(":selected").length || cy.edges(":selected").length != 1)
-              {
-                return;
-              }
-              if (!anchorsMoving)
-              {
-                  selectedEdges = cy.edges(':selected');
-                  cy.trigger("edgeediting.movestart", [selectedEdges]);
-                  anchorsMoving = true;
-              }
-              var moveSpeed = 3;
-                    
-              // doesn't make sense if alt and shift both pressed
-              if(e.altKey && e.shiftKey) {
-                return;
-              }
-              else if (e.altKey) {
-                moveSpeed = 1;
-              }
-              else if (e.shiftKey) {
-                moveSpeed = 10;
-              }
+          var dx = 0;
+          var dy = 0;
 
-              var upArrowCode = 38;
-              var downArrowCode = 40;
-              var leftArrowCode = 37;
-              var rightArrowCode = 39;
+          dx += keys[rightArrowCode] ? moveSpeed : 0;
+          dx -= keys[leftArrowCode] ? moveSpeed : 0;
+          dy += keys[downArrowCode] ? moveSpeed : 0;
+          dy -= keys[upArrowCode] ? moveSpeed : 0;
 
-              var dx = 0;
-              var dy = 0;
-
-              dx += keys[rightArrowCode] ? moveSpeed : 0;
-              dx -= keys[leftArrowCode] ? moveSpeed : 0;
-              dy += keys[downArrowCode] ? moveSpeed : 0;
-              dy -= keys[upArrowCode] ? moveSpeed : 0;
-
-              moveAnchorPoints({x:dx, y:dy}, selectedEdges);
-          }
+          moveAnchorPoints({ x: dx, y: dy }, selectedEdges);
+        }
       }
       function keyUp(e) {
 
-          if (e.keyCode < '37' || e.keyCode > '40') {
-              return;
-          }
-          e.preventDefault();
-          keys[e.keyCode] = false;
-          var shouldMove = typeof options().moveSelectedAnchorsOnKeyEvents === 'function'
-              ? options().moveSelectedAnchorsOnKeyEvents() : options().moveSelectedAnchorsOnKeyEvents;
+        if (e.keyCode < '37' || e.keyCode > '40') {
+          return;
+        }
+        e.preventDefault();
+        keys[e.keyCode] = false;
+        var shouldMove = typeof options().moveSelectedAnchorsOnKeyEvents === 'function'
+          ? options().moveSelectedAnchorsOnKeyEvents() : options().moveSelectedAnchorsOnKeyEvents;
 
-          if (!shouldMove) {
-              return;
-          }
+        if (!shouldMove) {
+          return;
+        }
 
-          cy.trigger("edgeediting.moveend", [selectedEdges]);
-          selectedEdges = undefined;
-          anchorsMoving = false;
+        cy.trigger("edgeediting.moveend", [selectedEdges]);
+        selectedEdges = undefined;
+        anchorsMoving = false;
 
       }
-      document.addEventListener("keydown",keyDown, true);
-      document.addEventListener("keyup",keyUp, true);
+      document.addEventListener("keydown", keyDown, true);
+      document.addEventListener("keyup", keyUp, true);
 
       $container.data('cyedgeediting', data);
     },
     unbind: function () {
-        cy.off('remove', 'node', eRemove)
-          .off('add', 'node', eAdd)
-          .off('style', 'edge.edgebendediting-hasbendpoints:selected, edge.edgecontrolediting-hascontrolpoints:selected', eStyle)
-          .off('select', 'edge', eSelect)
-          .off('unselect', 'edge', eUnselect)
-          .off('tapstart', eTapStart)
-          .off('tapstart', 'edge', eTapStartOnEdge)
-          .off('tapdrag', eTapDrag)
-          .off('tapend', eTapEnd)
-          .off('cxttap', eCxtTap)
-          .off('drag', 'node',eDrag);
+      cy.off('remove', 'node', eRemove)
+        .off('add', 'node', eAdd)
+        .off('style', 'edge.edgebendediting-hasbendpoints:selected, edge.edgecontrolediting-hascontrolpoints:selected', eStyle)
+        .off('select', 'edge', eSelect)
+        .off('unselect', 'edge', eUnselect)
+        .off('tapstart', eTapStart)
+        .off('tapstart', 'edge', eTapStartOnEdge)
+        .off('tapdrag', eTapDrag)
+        .off('tapend', eTapEnd)
+        .off('cxttap', eCxtTap)
+        .off('drag', 'node', eDrag);
 
-        cy.unbind("zoom pan", eZoom);
+      cy.unbind("zoom pan", eZoom);
     }
   };
 

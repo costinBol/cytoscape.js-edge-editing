@@ -46,6 +46,8 @@
       removeControlMenuItemTitle: "Remove Control Point",
       // title of remove all control points menu item
       removeAllControlMenuItemTitle: "Remove All Control Points",
+      // disable new point create on tap drag        
+      disableTagDragCreate: false,
       // whether the bend and control points can be moved by arrows
       moveSelectedAnchorsOnKeyEvents: function () {
           return true;
