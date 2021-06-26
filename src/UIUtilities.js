@@ -1360,7 +1360,9 @@ module.exports = function (params, cy) {
             edge = anchorManager.edge;
             type = anchorManager.edgeType;
           }
-
+          if (!cy.contextMenus) {
+            return;
+          }
           var menus = cy.contextMenus('get'); // get context menus instance
 
           if (!edgeToHighlight || edgeToHighlight.id() != edge.id() || anchorPointUtilities.isIgnoredEdge(edge) ||
@@ -1532,8 +1534,8 @@ module.exports = function (params, cy) {
         anchorsMoving = false;
 
       }
-      document.addEventListener("keydown", keyDown, true);
-      document.addEventListener("keyup", keyUp, true);
+      //document.addEventListener("keydown", keyDown, true);
+      //document.addEventListener("keyup", keyUp, true);
 
       $container.data('cyedgeediting', data);
     },
