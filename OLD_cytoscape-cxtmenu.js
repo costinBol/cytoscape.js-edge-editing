@@ -150,7 +150,7 @@ var cxtmenu = function cxtmenu(params) {
   canvas.width = containerSize;
   canvas.height = containerSize;
 
-  function createMenuItems(r, rs) {
+  function createMenuItems() {
     removeEles('.cxtmenu-item', parent);
     var dtheta = 2 * Math.PI / commands.length;
     var theta1 = Math.PI / 2;
@@ -160,14 +160,8 @@ var cxtmenu = function cxtmenu(params) {
       var command = commands[i];
 
       var midtheta = (theta1 + theta2) / 2;
-      var rx1 = (r + rs) / 2 * Math.cos(midtheta);
-      var ry1 = (r + rs) / 2 * Math.sin(midtheta);
-
-      // Arbitrary multiplier to increase the sizing of the space 
-      // available for the item.
-      var width = 1 * Math.abs((r - rs) * Math.cos(midtheta));
-      var height = 1 * Math.abs((r - rs) * Math.sin(midtheta));
-      width = Math.max(width, height);
+      var rx1 = 0.66 * r * Math.cos(midtheta);
+      var ry1 = 0.66 * r * Math.sin(midtheta);
 
       var item = createElement({ class: 'cxtmenu-item' });
       setStyles(item, {
@@ -180,11 +174,11 @@ var cxtmenu = function cxtmenu(params) {
         'text-shadow': '-1px -1px 2px ' + options.itemTextShadowColor + ', 1px -1px 2px ' + options.itemTextShadowColor + ', -1px 1px 2px ' + options.itemTextShadowColor + ', 1px 1px 1px ' + options.itemTextShadowColor,
         left: '50%',
         top: '50%',
-        'min-height': width + 'px',
-        width: width + 'px',
-        height: width + 'px',
-        marginLeft: rx1 - width / 2 + 'px',
-        marginTop: -ry1 - width / 2 + 'px'
+        'min-height': r * 0.66 + 'px',
+        width: r * 0.66 + 'px',
+        height: r * 0.66 + 'px',
+        marginLeft: rx1 - r * 0.33 + 'px',
+        marginTop: -ry1 - r * 0.33 + 'px'
       });
 
       var content = createElement({ class: 'cxtmenu-content' });
@@ -196,8 +190,8 @@ var cxtmenu = function cxtmenu(params) {
       }
 
       setStyles(content, {
-        'width': width + 'px',
-        'height': width + 'px',
+        'width': r * 0.66 + 'px',
+        'height': r * 0.66 + 'px',
         'vertical-align': 'middle',
         'display': 'table-cell'
       });
@@ -221,10 +215,10 @@ var cxtmenu = function cxtmenu(params) {
   }
 
   function drawBg(radius, rspotlight) {
+    rspotlight = rspotlight !== undefined ? rspotlight : rs;
     c2d.globalCompositeOperation = 'source-over';
 
-    var commandDescriptionPadding = getCommandDescriptionPadding();
-    c2d.clearRect(0, 0, containerSize, containerSize + commandDescriptionPadding);
+    c2d.clearRect(0, 0, containerSize, containerSize);
 
     // draw background items
     c2d.fillStyle = options.fillColor;
@@ -280,64 +274,11 @@ var cxtmenu = function cxtmenu(params) {
     c2d.globalCompositeOperation = 'source-over';
   }
 
-  function queueDrawCommands(rx, ry, radius, theta, rspotlight) {
-    redrawQueue.drawCommands = [rx, ry, radius, theta, rspotlight];
+  function queueDrawCommands(rx, ry, radius, theta) {
+    redrawQueue.drawCommands = [rx, ry, radius, theta];
   }
 
-  function drawCommandDescriptionText(text, x, y) {
-    if (!text) {
-      return;
-    }
-    c2d.font = options.commandDescriptionsOptions.font;
-    c2d.textAlign = "center";
-
-    var lines = text.split("\n");
-    var cx = x;
-    var cy = y;
-    var lineH = options.commandDescriptionsOptions.lineHeight;
-    var wrappedLines = [];
-
-    for (var i = 0; i < lines.length; ++i) {
-      var words = lines[i].split(' ');
-      var line = "";
-
-      for (var w = 0; w < words.length; ++w) {
-        var testLine = line + words[w] + " ";
-        var meas = c2d.measureText(testLine);
-        if (meas.width > containerSize && w > 0) {
-          wrappedLines.push(line);
-          line = words[w] + " ";
-        } else {
-          line = testLine;
-        }
-      }
-      wrappedLines.push(line);
-    }
-
-    cy = y;
-
-    c2d.fillStyle = options.fillColor;
-    c2d.fillRect(0, y - lineH, containerSize, wrappedLines.length * lineH + lineH / 2);
-
-    c2d.fillStyle = "white";
-
-    for (var _i = 0; _i < wrappedLines.length; ++_i) {
-      c2d.fillText(wrappedLines[_i], cx, cy);
-      cy += lineH;
-    }
-  }
-
-  function getCommandDescriptionPadding() {
-    return options.showCommandDescriptions ? options.commandDescriptionsOptions.lineHeight * options.commandDescriptionsOptions.maxLines : 0;
-  }
-
-  function drawCommands(rx, ry, radius, theta, rs) {
-
-    if (commands[activeCommandI]) {
-      if (options.showCommandDescriptions && options.commandDescriptionsOptions) {
-        drawCommandDescriptionText(commands[activeCommandI].description, radius + options.activePadding, radius * 2 + options.activePadding * 3);
-      }
-    }
+  function drawCommands(rx, ry, radius, theta) {
     var dtheta = 2 * Math.PI / commands.length;
     var theta1 = Math.PI / 2;
     var theta2 = theta1 + dtheta;
@@ -365,11 +306,8 @@ var cxtmenu = function cxtmenu(params) {
     c2d.rotate(rot);
 
     // clear the indicator
-    // The indicator size (arrow) depends on the node size as well. If the indicator size is bigger and the rendered node size + padding, 
-    // use the rendered node size + padding as the indicator size.
-    var indicatorSize = options.indicatorSize > rs + options.spotlightPadding ? rs + options.spotlightPadding : options.indicatorSize;
     c2d.beginPath();
-    c2d.fillRect(-indicatorSize / 2, -indicatorSize / 2, indicatorSize, indicatorSize);
+    c2d.fillRect(-options.indicatorSize / 2, -options.indicatorSize / 2, options.indicatorSize, options.indicatorSize);
     c2d.closePath();
     c2d.fill();
 
@@ -392,13 +330,11 @@ var cxtmenu = function cxtmenu(params) {
     var w = containerSize;
     var h = containerSize;
 
-    var commandDescriptionPadding = getCommandDescriptionPadding();
-
     canvas.width = w * pxr;
-    canvas.height = (h + commandDescriptionPadding) * pxr;
+    canvas.height = h * pxr;
 
     canvas.style.width = w + 'px';
-    canvas.style.height = h + commandDescriptionPadding + 'px';
+    canvas.style.height = h + 'px';
 
     c2d.setTransform(1, 0, 0, 1, 0, 0);
     c2d.scale(pxr, pxr);
@@ -542,6 +478,11 @@ var cxtmenu = function cxtmenu(params) {
           return;
         }
 
+        // Allow menu options to be hidden dynamically
+        if (options.beforeMenuOpen) {
+          options.beforeMenuOpen();
+        }
+
         zoomEnabled = cy.userZoomingEnabled();
         cy.userZoomingEnabled(false);
 
@@ -558,35 +499,24 @@ var cxtmenu = function cxtmenu(params) {
 
         var rp = void 0,
             rw = void 0,
-            rh = void 0,
-            rs = void 0;
-        if (!isCy && ele && ele.isNode instanceof Function && ele.isNode() && !ele.isParent() && !options.atMouse) {
-          // If it's a node, the default spotlight radius for a node is the node width
+            rh = void 0;
+        if (!isCy && ele.isNode() && !ele.isParent() && !options.atMouse) {
           rp = ele.renderedPosition();
           rw = ele.renderedOuterWidth();
           rh = ele.renderedOuterHeight();
-          rs = rw / 2;
-          // If adaptativeNodespotlightRadius is not enabled and min|maxSpotlighrRadius is defined, use those instead
-          rs = !options.adaptativeNodeSpotlightRadius && options.minSpotlightRadius ? Math.max(rs, options.minSpotlightRadius) : rs;
-          rs = !options.adaptativeNodeSpotlightRadius && options.maxSpotlightRadius ? Math.min(rs, options.maxSpotlightRadius) : rs;
         } else {
-          // If it's the background or an edge, the spotlight radius is the min|maxSpotlightRadius
           rp = e.renderedPosition || e.cyRenderedPosition;
           rw = 1;
           rh = 1;
-          rs = rw / 2;
-          rs = options.minSpotlightRadius ? Math.max(rs, options.minSpotlightRadius) : rs;
-          rs = options.maxSpotlightRadius ? Math.min(rs, options.maxSpotlightRadius) : rs;
         }
 
         offset = getOffset(container);
 
         ctrx = rp.x;
         ctry = rp.y;
+
         r = rw / 2 + (options.menuRadius instanceof Function ? options.menuRadius(target) : Number(options.menuRadius));
-
         containerSize = (r + options.activePadding) * 2;
-
         updatePixelRatio();
 
         setStyles(parent, {
@@ -596,8 +526,13 @@ var cxtmenu = function cxtmenu(params) {
           left: rp.x - r + 'px',
           top: rp.y - r + 'px'
         });
-        createMenuItems(r, rs);
-        queueDrawBg(r, rs);
+        createMenuItems();
+
+        rs = Math.max(rw, rh) / 2;
+        rs = Math.max(rs, options.minSpotlightRadius);
+        rs = Math.min(rs, options.maxSpotlightRadius);
+
+        queueDrawBg(r);
 
         activeCommandI = undefined;
 
@@ -609,7 +544,6 @@ var cxtmenu = function cxtmenu(params) {
       if (!inGesture) {
         return;
       }
-      e.preventDefault(); // Otherwise, on mobile, the pull-down refresh gesture gets activated
 
       var origE = e.originalEvent;
       var isTouch = origE.touches && origE.touches.length > 0;
@@ -632,27 +566,17 @@ var cxtmenu = function cxtmenu(params) {
 
       var rw = void 0;
       if (target && target.isNode instanceof Function && target.isNode() && !target.isParent() && !options.atMouse) {
-        // If it's a node, the default spotlight radius for a node is the node width
         rw = target.renderedOuterWidth();
-        rs = rw / 2;
-        // If adaptativeNodespotlightRadius is not enabled and min|maxSpotlighrRadius is defined, use those instead
-        rs = !options.adaptativeNodeSpotlightRadius && options.minSpotlightRadius ? Math.max(rs, options.minSpotlightRadius) : rs;
-        rs = !options.adaptativeNodeSpotlightRadius && options.maxSpotlightRadius ? Math.min(rs, options.maxSpotlightRadius) : rs;
       } else {
-        // If it's the background or an edge, the spotlight radius is the min|maxSpotlightRadius
         rw = 1;
-        rs = rw / 2;
-        rs = options.minSpotlightRadius ? Math.max(rs, options.minSpotlightRadius) : rs;
-        rs = options.maxSpotlightRadius ? Math.min(rs, options.maxSpotlightRadius) : rs;
       }
 
       r = rw / 2 + (options.menuRadius instanceof Function ? options.menuRadius(target) : Number(options.menuRadius));
-
       if (d < rs + options.spotlightPadding) {
-        queueDrawBg(r, rs);
+        queueDrawBg(r);
         return;
       }
-      queueDrawBg(r, rs);
+      queueDrawBg(r);
 
       var rx = dx * r / d;
       var ry = dy * r / d;
@@ -683,7 +607,7 @@ var cxtmenu = function cxtmenu(params) {
         theta2 += dtheta;
       }
 
-      queueDrawCommands(rx, ry, r, theta, rs);
+      queueDrawCommands(rx, ry, r, theta);
     }).on('tapdrag', dragHandler).on('cxttapend tapend', function () {
       parent.style.display = 'none';
 
@@ -731,7 +655,8 @@ var cxtmenu = function cxtmenu(params) {
   return {
     destroy: function destroy() {
       destroyInstance();
-    }
+    },
+    options: options
   };
 };
 
@@ -780,7 +705,6 @@ var defaults = {
       fillColor: 'rgba(200, 200, 200, 0.75)', // optional: custom background color for item
       content: 'a command name' // html/text content to be displayed in the menu
       contentStyle: {}, // css key:value pairs to set the command's css in js if you want
-      description: 'longer description' // text description
       select: function(ele){ // a function to execute when the command is selected
         console.log( ele.id() ) // `ele` holds the reference to the active element
       },
@@ -791,23 +715,17 @@ var defaults = {
   fillColor: 'rgba(0, 0, 0, 0.75)', // the background colour of the menu
   activeFillColor: 'rgba(1, 105, 217, 0.75)', // the colour used to indicate the selected command
   activePadding: 20, // additional size in pixels for the active command
-  indicatorSize: 24, // the size in pixels of the pointer to the active command, will default to the node size if the node size is smaller than the indicator size, 
+  indicatorSize: 24, // the size in pixels of the pointer to the active command
   separatorWidth: 3, // the empty spacing in pixels between successive commands
   spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
-  adaptativeNodeSpotlightRadius: false, // specify whether the spotlight radius should adapt to the node size
-  minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
-  maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+  minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight
+  maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight
   openMenuEvents: 'cxttapstart taphold', // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
   itemColor: 'white', // the colour of text in the command's content
   itemTextShadowColor: 'transparent', // the text shadow colour of the command's content
   zIndex: 9999, // the z-index of the ui div
-  atMouse: false, // draw menu at mouse position
-  showCommandDescriptions: false,
-  commandDescriptionsOptions: {
-    font: "16px Arial",
-    lineHeight: 20,
-    maxLines: 5 // show description of active command
-  } };
+  atMouse: false // draw menu at mouse position
+};
 
 module.exports = defaults;
 
