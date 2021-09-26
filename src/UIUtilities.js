@@ -134,7 +134,6 @@ module.exports = function (params, cy) {
           anchorManager.touchedAnchor = undefined;
           mouseOut = false;
           anchorManager.edge.select();
-
           resetActiveBgColor();
           resetGestures();
 
@@ -409,8 +408,6 @@ module.exports = function (params, cy) {
             {
               content: '<span class="fas fa-bezier-curve fa-2x"></span> Add curve',
               select: function (ele) {
-                console.log(ele.data('name'));
-
                 var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
                 anchorPointUtilities.currentCtxPos = cyPos;
                 anchorPointUtilities.currentCtxEdge = ele;
@@ -422,8 +419,6 @@ module.exports = function (params, cy) {
             {
               content: '<span class="fas fa-chart-line fa-2x"></span> Add corner',
               select: function (ele) {
-                console.log(ele.data('name'));
-
                 var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
                 anchorPointUtilities.currentCtxPos = cyPos;
                 anchorPointUtilities.currentCtxEdge = ele;
@@ -435,8 +430,6 @@ module.exports = function (params, cy) {
             {
               content: '<span class="fas fa-times fa-2x"></span> Remove anchors',
               select: function (ele) {
-                console.log(ele.data('name'));
-
                 var cyPos = window.currentEvent.position || window.currentEvent.cyPosition;
                 anchorPointUtilities.currentCtxPos = cyPos;
                 anchorPointUtilities.currentCtxEdge = ele;
@@ -523,7 +516,6 @@ module.exports = function (params, cy) {
       }
 
       function refreshDraws() {
-
         // don't clear anchor which is being moved
         anchorManager.clearAnchorsExcept(anchorManager.touchedAnchor);
 
@@ -1107,10 +1099,9 @@ module.exports = function (params, cy) {
         });
 
         cy.on('tapend', eTapEnd = function (event) {
-
-          if (mouseOut) {
+         // if (mouseOut) {
             canvas.getStage().fire("contentMouseup");
-          }
+         // }
 
           var edge = movedEdge || anchorManager.edge;
 
@@ -1232,7 +1223,7 @@ module.exports = function (params, cy) {
                     };
                     var result = cy.undoRedo().do('reconnectEdge', param);
                     edge = result.edge;
-                    //edge.select();
+                    edge.select();
                   }
                 }
               }
