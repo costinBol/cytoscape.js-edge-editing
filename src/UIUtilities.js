@@ -47,9 +47,21 @@ module.exports = function (params, cy) {
       stageId++;
       var $canvasElement = $('<div id="' + canvasElementId + '"></div>');
 
+      $canvasElement
+      .attr('height', $container.height())
+      .attr('width', $container.width())
+      .css({
+        'position': 'absolute',
+        'top': 0,
+        'left': 0,
+        'z-index': opts.zIndex
+      })
+      ;
+
       if ($container.find('#' + canvasElementId).length < 1) {
         $container.append($canvasElement);
       }
+      
 
       /* 
         Maintain a single Konva.stage object throughout the application that uses this extension
@@ -1028,7 +1040,7 @@ module.exports = function (params, cy) {
 
           var type = anchorPointUtilities.getEdgeType(edge);
 
-          if (createAnchorOnDrag && !anchorTouched && type !== 'inconclusive') {
+          if (createAnchorOnDrag && !opts.disableTagDragCreate && !anchorTouched && type !== 'inconclusive') {
             // remember state before creating anchor
             var weightStr = anchorPointUtilities.syntax[type]['weight'];
             var distanceStr = anchorPointUtilities.syntax[type]['distance'];
